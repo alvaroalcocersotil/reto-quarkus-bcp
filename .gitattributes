@@ -1,0 +1,6 @@
+# Normalización de fin de línea
+* text=auto
+
+# Mantener LF en claves PEM y scripts (evita corrupción de claves en Windows)
+*.pem text eol=lf
+*.sh text eol=lf

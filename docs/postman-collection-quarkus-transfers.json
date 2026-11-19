@@ -1,0 +1,660 @@
+{
+  "info": {
+    "_postman_id": "b1c0ffee-1234-4abc-8def-00c0ffee0001",
+    "name": "BCP Transferencias Bancarias — Demo Saga Quarkus",
+    "description": "Demo end-to-end de los 3 microservicios: customer (8081), account (8082), transaction (8080). Seeds: cliente 11111111-1111-1111-1111-111111111111 (ACTIVE), cuentas ACC-000001 (1000.00), ACC-000002 (500.00), ACC-000003 (BLOCKED).\n\nTokens JWT generados con `java tools/GenDemoTokens.java` (RS256, issuer https://bcp-challenge.com/issuer, vigencia 24 h): `jwt_user` (ROLE_USER) y `jwt_admin` (ROLE_ADMIN).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "customer_url",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "account_url",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "transaction_url",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "jwt_user",
+      "value": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2JjcC1jaGFsbGVuZ2UuY29tL2lzc3VlciIsInN1YiI6ImRlbW8tdXNlckBiY3AuY29tIiwidXBuIjoiZGVtby11c2VyQGJjcC5jb20iLCJncm91cHMiOlsiUk9MRV9VU0VSIl0sImlhdCI6MTc5NTEwMjM2MSwiZXhwIjoxNzk1MTg4NzYxLCJqdGkiOiIwNTZhM2E5MS1lY2I0LTQ1ZGMtODM3OS0yODQyZTdiOGIyOTMifQ.rXx0sDYx0RWc7qXMhSD36GEbey3hXR4T-MxYcRFjjKevcMtpV8XvhizLFOduJkZ7EZpyy7Ij-9SoLLBlT_SmnfosmhoTzSwmG5RvUoKOgiljYRJGwuj47vIHISlIaEdIl8WgP8UlMgfZKzfXs9ZOHYGHJ9tsZG3cxrrkuN6iXn_az3mID-YNUb3yJ265xx9_4gwMwnhk0QTkgwpIxUDSUiygBKJfOhriuJaG3Lq5fCmu3tqWLjRsr4POkf8RJULrjMUdmj0YCsYp3j4J6nOBOIU0IUbAln6F0hPg6j-qAeukNTSVZseKsi_HvDpo6M0hxrqG4w5kj8nslnAxAlMNwQ",
+      "type": "secret"
+    },
+    {
+      "key": "jwt_admin",
+      "value": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2JjcC1jaGFsbGVuZ2UuY29tL2lzc3VlciIsInN1YiI6ImRlbW8tYWRtaW5AYmNwLmNvbSIsInVwbiI6ImRlbW8tYWRtaW5AYmNwLmNvbSIsImdyb3VwcyI6WyJST0xFX0FETUlOIl0sImlhdCI6MTc5NTEwMjM2MSwiZXhwIjoxNzk1MTg4NzYxLCJqdGkiOiJjYzgwNzExOC01NzA0LTRjMmUtOGFjZi1kYTExNTg0MWU3ZWEifQ.l_mrdp1270xKd9biGJD9vq_IY5odBMk6YtAU0wym7lBpn3M_u_Fzikmni_DNTHPwjCWod_YkpfXn85IPTQlfNUnMek9nJFHo5NDnt-xDYvMx6LAXge_R3_JhtRRJbWgtbTYKj-L3rLtcJKpNhHwi4Ihc1G62DmaaXebqvAjwWiJ9PJmZfztJT7hy47A1pw4BJOJkYtZ4gnAf_wLEHMLAWVF3tIo_w2SKJgfLlxfbok3HbKrt8Ib6OwTnzWtvDfH3PUh8FRtHwvLs8CXumVogV397bE70XIuQJP49SNmyFNTKHCiqbMLkM-B8nEUzRjaMYT87YOW9Ka7A_HcQQOfF7A",
+      "type": "secret"
+    },
+    {
+      "key": "transfer_id",
+      "value": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Observabilidad & Health",
+      "item": [
+        {
+          "name": "Health — transaction (8080)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{transaction_url}}/q/health",
+              "host": ["{{transaction_url}}"],
+              "path": ["q", "health"]
+            }
+          }
+        },
+        {
+          "name": "Health — customer (8081)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{customer_url}}/q/health",
+              "host": ["{{customer_url}}"],
+              "path": ["q", "health"]
+            }
+          }
+        },
+        {
+          "name": "Health — account (8082)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{account_url}}/q/health",
+              "host": ["{{account_url}}"],
+              "path": ["q", "health"]
+            }
+          }
+        },
+        {
+          "name": "Metrics — transaction (8080) [transfers.*]",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{transaction_url}}/q/metrics",
+              "host": ["{{transaction_url}}"],
+              "path": ["q", "metrics"]
+            }
+          }
+        },
+        {
+          "name": "Metrics — account (8082)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{account_url}}/q/metrics",
+              "host": ["{{account_url}}"],
+              "path": ["q", "metrics"]
+            }
+          }
+        },
+        {
+          "name": "Metrics — customer (8081)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{customer_url}}/q/metrics",
+              "host": ["{{customer_url}}"],
+              "path": ["q", "metrics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Customer Service (8081)",
+      "item": [
+        {
+          "name": "Listar clientes (seed) — jwt_user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{customer_url}}/api/v1/customers",
+              "host": ["{{customer_url}}"],
+              "path": ["api", "v1", "customers"]
+            }
+          }
+        },
+        {
+          "name": "Consultar cliente ACTIVE (11111111-...) — jwt_user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{customer_url}}/api/v1/customers/11111111-1111-1111-1111-111111111111",
+              "host": ["{{customer_url}}"],
+              "path": ["api", "v1", "customers", "11111111-1111-1111-1111-111111111111"]
+            }
+          }
+        },
+        {
+          "name": "Consultar cliente SUSPENDED (22222222-...) — jwt_user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{customer_url}}/api/v1/customers/22222222-2222-2222-2222-222222222222",
+              "host": ["{{customer_url}}"],
+              "path": ["api", "v1", "customers", "22222222-2222-2222-2222-222222222222"]
+            }
+          }
+        },
+        {
+          "name": "Validar cliente ACTIVE → eligible=true",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{customer_url}}/api/v1/customers/11111111-1111-1111-1111-111111111111/validate",
+              "host": ["{{customer_url}}"],
+              "path": ["api", "v1", "customers", "11111111-1111-1111-1111-111111111111", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Validar cliente SUSPENDED → 422 customer-not-active",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{customer_url}}/api/v1/customers/22222222-2222-2222-2222-222222222222/validate",
+              "host": ["{{customer_url}}"],
+              "path": ["api", "v1", "customers", "22222222-2222-2222-2222-222222222222", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Crear cliente (ADMIN) → 201",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_admin}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "X-Correlation-ID", "value": "demo-customer-create" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ana\",\n  \"lastName\": \"Torres\",\n  \"documentType\": \"DNI\",\n  \"documentNumber\": \"99887766\",\n  \"email\": \"ana.torres@mail.com\",\n  \"phoneNumber\": \"+51911223344\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{customer_url}}/api/v1/customers",
+              "host": ["{{customer_url}}"],
+              "path": ["api", "v1", "customers"]
+            }
+          }
+        },
+        {
+          "name": "Crear cliente documento duplicado → 409 Conflict",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_admin}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "X-Correlation-ID", "value": "demo-customer-409" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Otro\",\n  \"lastName\": \"Garcia\",\n  \"documentType\": \"DNI\",\n  \"documentNumber\": \"87654321\",\n  \"email\": \"otro.garcia@mail.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{customer_url}}/api/v1/customers",
+              "host": ["{{customer_url}}"],
+              "path": ["api", "v1", "customers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Account Service (8082)",
+      "item": [
+        {
+          "name": "Listar cuentas (seeds ACC-000001/2/3) — jwt_user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{account_url}}/api/v1/accounts",
+              "host": ["{{account_url}}"],
+              "path": ["api", "v1", "accounts"]
+            }
+          }
+        },
+        {
+          "name": "Cuentas por cliente (?customerId=) — jwt_user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{account_url}}/api/v1/accounts?customerId=11111111-1111-1111-1111-111111111111",
+              "host": ["{{account_url}}"],
+              "path": ["api", "v1", "accounts"],
+              "query": [
+                { "key": "customerId", "value": "11111111-1111-1111-1111-111111111111" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cuenta ACC-000001 (1000.00 ACTIVE)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{account_url}}/api/v1/accounts/aaaaaaaa-0000-0000-0000-000000000001",
+              "host": ["{{account_url}}"],
+              "path": ["api", "v1", "accounts", "aaaaaaaa-0000-0000-0000-000000000001"]
+            }
+          }
+        },
+        {
+          "name": "Cuenta ACC-000002 (500.00 ACTIVE)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{account_url}}/api/v1/accounts/aaaaaaaa-0000-0000-0000-000000000002",
+              "host": ["{{account_url}}"],
+              "path": ["api", "v1", "accounts", "aaaaaaaa-0000-0000-0000-000000000002"]
+            }
+          }
+        },
+        {
+          "name": "Cuenta ACC-000003 (BLOCKED)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{account_url}}/api/v1/accounts/aaaaaaaa-0000-0000-0000-000000000003",
+              "host": ["{{account_url}}"],
+              "path": ["api", "v1", "accounts", "aaaaaaaa-0000-0000-0000-000000000003"]
+            }
+          }
+        },
+        {
+          "name": "Balance ACC-000001 (/balance)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{account_url}}/api/v1/accounts/aaaaaaaa-0000-0000-0000-000000000001/balance",
+              "host": ["{{account_url}}"],
+              "path": ["api", "v1", "accounts", "aaaaaaaa-0000-0000-0000-000000000001", "balance"]
+            }
+          }
+        },
+        {
+          "name": "Seguridad: /internal/** con jwt_user → 403 Forbidden",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "X-Correlation-ID", "value": "demo-security-403" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionId\": \"00000000-0000-4000-8000-0000000000d0\",\n  \"amount\": 10.00\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{account_url}}/internal/accounts/aaaaaaaa-0000-0000-0000-000000000001/debit",
+              "host": ["{{account_url}}"],
+              "path": ["internal", "accounts", "aaaaaaaa-0000-0000-0000-000000000001", "debit"]
+            }
+          }
+        },
+        {
+          "name": "Seguridad: /internal/** con jwt_admin → 200 OK (débito manual)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_admin}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "X-Correlation-ID", "value": "demo-internal-ok" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionId\": \"00000000-0000-4000-8000-0000000000d1\",\n  \"amount\": 10.00\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{account_url}}/internal/accounts/aaaaaaaa-0000-0000-0000-000000000001/debit",
+              "host": ["{{account_url}}"],
+              "path": ["internal", "accounts", "aaaaaaaa-0000-0000-0000-000000000001", "debit"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Transaction Service — Flujos Saga (8080)",
+      "item": [
+        {
+          "name": "Happy Path: transferencia 100 → 201 COMPLETED",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Idempotency-Key", "value": "00000000-0000-4000-8000-0000000000a1" },
+              { "key": "X-Correlation-ID", "value": "demo-saga-happy-001" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"aaaaaaaa-0000-0000-0000-000000000001\",\n  \"targetAccountId\": \"aaaaaaaa-0000-0000-0000-000000000002\",\n  \"amount\": 100.00,\n  \"customerId\": \"11111111-1111-1111-1111-111111111111\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{transaction_url}}/api/v1/transfers",
+              "host": ["{{transaction_url}}"],
+              "path": ["api", "v1", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Idempotencia REPLAY: misma key + mismo payload → 200 OK",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Idempotency-Key", "value": "00000000-0000-4000-8000-0000000000a1" },
+              { "key": "X-Correlation-ID", "value": "demo-saga-happy-001" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"aaaaaaaa-0000-0000-0000-000000000001\",\n  \"targetAccountId\": \"aaaaaaaa-0000-0000-0000-000000000002\",\n  \"amount\": 100.00,\n  \"customerId\": \"11111111-1111-1111-1111-111111111111\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{transaction_url}}/api/v1/transfers",
+              "host": ["{{transaction_url}}"],
+              "path": ["api", "v1", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Idempotencia CONFLICTO: misma key + monto distinto → 409",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Idempotency-Key", "value": "00000000-0000-4000-8000-0000000000a1" },
+              { "key": "X-Correlation-ID", "value": "demo-saga-conflict" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"aaaaaaaa-0000-0000-0000-000000000001\",\n  \"targetAccountId\": \"aaaaaaaa-0000-0000-0000-000000000002\",\n  \"amount\": 200.00,\n  \"customerId\": \"11111111-1111-1111-1111-111111111111\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{transaction_url}}/api/v1/transfers",
+              "host": ["{{transaction_url}}"],
+              "path": ["api", "v1", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Saldo insuficiente (999999) → 422 insufficient-funds",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Idempotency-Key", "value": "00000000-0000-4000-8000-0000000000a2" },
+              { "key": "X-Correlation-ID", "value": "demo-saga-insufficient" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"aaaaaaaa-0000-0000-0000-000000000001\",\n  \"targetAccountId\": \"aaaaaaaa-0000-0000-0000-000000000002\",\n  \"amount\": 999999.00,\n  \"customerId\": \"11111111-1111-1111-1111-111111111111\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{transaction_url}}/api/v1/transfers",
+              "host": ["{{transaction_url}}"],
+              "path": ["api", "v1", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Misma cuenta origen/destino → 422 same-account",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Idempotency-Key", "value": "00000000-0000-4000-8000-0000000000a3" },
+              { "key": "X-Correlation-ID", "value": "demo-saga-same-account" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"aaaaaaaa-0000-0000-0000-000000000001\",\n  \"targetAccountId\": \"aaaaaaaa-0000-0000-0000-000000000001\",\n  \"amount\": 50.00,\n  \"customerId\": \"11111111-1111-1111-1111-111111111111\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{transaction_url}}/api/v1/transfers",
+              "host": ["{{transaction_url}}"],
+              "path": ["api", "v1", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Cuenta bloqueada ACC-000003 → 422 account-blocked",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Idempotency-Key", "value": "00000000-0000-4000-8000-0000000000a4" },
+              { "key": "X-Correlation-ID", "value": "demo-saga-blocked" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"aaaaaaaa-0000-0000-0000-000000000003\",\n  \"targetAccountId\": \"aaaaaaaa-0000-0000-0000-000000000002\",\n  \"amount\": 10.00,\n  \"customerId\": \"11111111-1111-1111-1111-111111111111\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{transaction_url}}/api/v1/transfers",
+              "host": ["{{transaction_url}}"],
+              "path": ["api", "v1", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Historial: transfers COMPLETED (filtro status)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{transaction_url}}/api/v1/transfers?status=COMPLETED",
+              "host": ["{{transaction_url}}"],
+              "path": ["api", "v1", "transfers"],
+              "query": [
+                { "key": "status", "value": "COMPLETED" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Detalle por ID ({{transfer_id}}) — reemplazar con id del happy path",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{transaction_url}}/api/v1/transfers/{{transfer_id}}",
+              "host": ["{{transaction_url}}"],
+              "path": ["api", "v1", "transfers", "{{transfer_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Detalle inexistente → 404 transfer-not-found",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{jwt_user}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{transaction_url}}/api/v1/transfers/00000000-0000-0000-0000-000000000000",
+              "host": ["{{transaction_url}}"],
+              "path": ["api", "v1", "transfers", "00000000-0000-0000-0000-000000000000"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

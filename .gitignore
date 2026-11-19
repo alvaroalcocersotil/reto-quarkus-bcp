@@ -1,0 +1,30 @@
+# Maven
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# Quarkus
+*.jar.original
+.data/
+
+# Logs y temporales
+logs/
+*.log
+*.tmp
+*.bak
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Keystore temporal (los PEM de dev/test SÍ se versionan)
+*.p12
+*.jks
